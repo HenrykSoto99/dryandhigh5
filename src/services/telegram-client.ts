@@ -169,12 +169,12 @@ export class TelegramClient {
   ): Promise<BotEvent> {
     const { data, error } = await supabase
       .from('bot_events')
-      .insert({
+      .insert([{
         user_id: userId,
         event_type: eventType,
-        event_data: eventData,
+        event_data: eventData as Json,
         severity,
-      })
+      }])
       .select()
       .single();
 
