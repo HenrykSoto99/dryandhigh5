@@ -297,7 +297,7 @@ export class TelegramClient {
     }
 
     if (filters?.risk_level) {
-      query = query.eq('risk_level', filters.risk_level);
+      query = query.eq('risk_level', filters.risk_level as 'low' | 'medium' | 'high' | 'critical');
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
