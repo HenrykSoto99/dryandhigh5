@@ -269,7 +269,7 @@ export class TelegramClient {
     return data;
   }
 
-  static async getBotSettings(key: string): Promise<Record<string, unknown> | null> {
+  static async getBotSettings(key: string): Promise<Json | null> {
     const { data, error } = await supabase
       .from('bot_settings')
       .select('setting_value')
@@ -281,7 +281,7 @@ export class TelegramClient {
       return null;
     }
 
-    return data?.setting_value || null;
+    return (data?.setting_value as Json) ?? null;
   }
 
   static async getAllUsers(
