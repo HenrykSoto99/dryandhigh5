@@ -27,7 +27,7 @@ export interface TelegramMessage {
   content: string;
   telegram_message_id?: number;
   ai_confidence?: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
   created_at: string;
 }
 
@@ -35,7 +35,7 @@ export interface BotEvent {
   id: string;
   user_id: string;
   event_type: string;
-  event_data: Record<string, unknown>;
+  event_data: Json;
   severity: 'info' | 'warning' | 'critical';
   created_at: string;
 }
@@ -49,6 +49,7 @@ export interface CrisisFlag {
   admin_acknowledged: boolean;
   admin_notes?: string;
   resolved: boolean;
+  resolved_at?: string;
   created_at: string;
   updated_at: string;
 }
