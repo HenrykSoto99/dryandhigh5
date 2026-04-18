@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { Json } from '@/integrations/supabase/types';
 
 export interface TelegramUser {
   id: string;
@@ -26,7 +27,7 @@ export interface TelegramMessage {
   content: string;
   telegram_message_id?: number;
   ai_confidence?: number;
-  metadata?: Record<string, unknown>;
+  metadata?: Json;
   created_at: string;
 }
 
@@ -34,7 +35,7 @@ export interface BotEvent {
   id: string;
   user_id: string;
   event_type: string;
-  event_data: Record<string, unknown>;
+  event_data: Json;
   severity: 'info' | 'warning' | 'critical';
   created_at: string;
 }
@@ -48,6 +49,7 @@ export interface CrisisFlag {
   admin_acknowledged: boolean;
   admin_notes?: string;
   resolved: boolean;
+  resolved_at?: string;
   created_at: string;
   updated_at: string;
 }
@@ -141,13 +143,13 @@ export class TelegramClient {
   ): Promise<TelegramMessage> {
     const { data, error } = await supabase
       .from('telegram_messages')
-      .insert({
+      .insert([{
         user_id: userId,
         conversation_id: conversationId,
         message_type: type,
         content,
-        metadata: metadata || {},
-      })
+        metadata: (metadata || {}) as Json,
+      }])
       .select()
       .single();
 
@@ -167,12 +169,12 @@ export class TelegramClient {
   ): Promise<BotEvent> {
     const { data, error } = await supabase
       .from('bot_events')
-      .insert({
+      .insert([{
         user_id: userId,
         event_type: eventType,
-        event_data: eventData,
+        event_data: eventData as Json,
         severity,
-      })
+      }])
       .select()
       .single();
 
@@ -267,7 +269,7 @@ export class TelegramClient {
     return data;
   }
 
-  static async getBotSettings(key: string): Promise<Record<string, unknown> | null> {
+  static async getBotSettings(key: string): Promise<Json | null> {
     const { data, error } = await supabase
       .from('bot_settings')
       .select('setting_value')
@@ -279,7 +281,7 @@ export class TelegramClient {
       return null;
     }
 
-    return data?.setting_value || null;
+    return (data?.setting_value as Json) ?? null;
   }
 
   static async getAllUsers(
@@ -295,7 +297,7 @@ export class TelegramClient {
     }
 
     if (filters?.risk_level) {
-      query = query.eq('risk_level', filters.risk_level);
+      query = query.eq('risk_level', filters.risk_level as 'low' | 'medium' | 'high' | 'critical');
     }
 
     const { data, error } = await query.order('created_at', { ascending: false });
