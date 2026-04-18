@@ -143,13 +143,13 @@ export class TelegramClient {
   ): Promise<TelegramMessage> {
     const { data, error } = await supabase
       .from('telegram_messages')
-      .insert({
+      .insert([{
         user_id: userId,
         conversation_id: conversationId,
         message_type: type,
         content,
-        metadata: metadata || {},
-      })
+        metadata: (metadata || {}) as Json,
+      }])
       .select()
       .single();
 
