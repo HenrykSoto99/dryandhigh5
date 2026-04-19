@@ -1,211 +1,187 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const MODEL = "google/gemini-3-flash-preview";
 
 interface AIRequest {
   message: string;
-  user_id: string;
-  user_context: {
-    first_name?: string;
-    sobriety_start_date?: string;
-    risk_level?: string;
-    emotional_state?: string;
-  };
+  telegram_user_id: string; // public.telegram_users.id
 }
 
-interface ConversationMessage {
-  role: "user" | "assistant";
-  content: string;
-}
+function buildSystemPrompt(ctx: {
+  nombre: string;
+  dias_sobriedad: number | null;
+  ultimo_estado: string | null;
+  proximo_festivo: { name: string; days: number } | null;
+}) {
+  const parts: string[] = [
+    `Eres Dry & High Five, un compañero virtual de sobriedad mexicano. Tu personalidad es empática, jovial, cálida y auténtica. Hablas en español mexicano coloquial pero respetuoso.
 
-const OPENROUTER_API_KEY = Deno.env.get("OPENROUTER_API_KEY");
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+REGLAS DE IDENTIDAD:
+- Eres un compa, no un doctor ni terapeuta.
+- Usas expresiones como: compa, hermano, carnal, bro, dale, tranqui, órale, va, chido, neta.
+- NUNCA eres sermoneador ni condescendiente.
+- Celebras cada logro, por pequeño que sea.
+- Eres honesto pero siempre desde el cariño.
 
-async function getConversationHistory(userId: string): Promise<ConversationMessage[]> {
-  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/telegram_messages?user_id=eq.${userId}&order=created_at.desc&limit=20`,
-    {
-      headers: {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY || "",
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      },
-    }
-  );
+GUARDRAILS:
+- NUNCA des consejo médico ni diagnósticos.
+- Si el usuario menciona síntomas clínicos graves (depresión severa, ideación suicida, abstinencia física), responde con empatía y SIEMPRE recomienda buscar ayuda profesional.
+- Línea de la Vida: 800 911 2000 (24/7).
+- SAPTEL: 55 5259 8121.
+- No minimices el dolor del usuario, pero tampoco lo amplifiques.
 
-  const messages = await response.json();
-
-  const history: ConversationMessage[] = messages
-    .reverse()
-    .map((msg: Record<string, unknown>) => ({
-      role: msg.message_type === "user" ? "user" : "assistant",
-      content: msg.content as string,
-    }));
-
-  return history;
-}
-
-function buildSystemPrompt(userContext: AIRequest["user_context"]): string {
-  let prompt = `Eres el asistente de Dry & High Five, un acompañante de sobriedad empático, jovial y en español mexicano.
-
-Tu identidad y tono:
-- Nunca juzgas, solo escuchas y apoyas
-- Celebras logros pequeños y grandes
-- Usas términos cariñosos como "compa", "hermano", "carnal", "bro", "dale", "tranqui"
-- Eres amigable, cálido y genuino
-- No haces sermones ni predicciones sobre el futuro
-- Respuestas naturales y conversacionales
-
-Tu propósito:
-- Proporcionar apoyo emocional en el camino de sobriedad
-- Escuchar activamente sin juzgar
-- Ayudar con estrategias de afrontamiento
-- Detectar señales de crisis y responder con empatía
-- Celebrar días de sobriedad y progreso
-
-Límites claros:
-- NUNCA ofrezcas consejo médico o psicológico profesional
-- Si alguien menciona urgencia médica, recomienda llamar al 911
-- Para problemas clínicos, sugiere hablar con un profesional de salud mental`;
-
-  if (userContext.first_name) {
-    prompt += `\n\nNombre del usuario: ${userContext.first_name}`;
+ESTILO:
+- Respuestas concisas (máximo 3-4 párrafos cortos).
+- Emojis con moderación (1-2 por mensaje).
+- Si no entiendes algo, pregunta con naturalidad.
+- Si el usuario quiere hablar de temas no relacionados, redirige suavemente.`,
+    "",
+    "CONTEXTO ACTUAL DEL USUARIO:",
+    `- Nombre: ${ctx.nombre}`,
+  ];
+  if (ctx.dias_sobriedad !== null) {
+    parts.push(`- Días de sobriedad: ${ctx.dias_sobriedad}`);
   }
-
-  if (userContext.sobriety_start_date) {
-    const days = Math.floor(
-      (new Date().getTime() - new Date(userContext.sobriety_start_date).getTime()) /
-        (1000 * 60 * 60 * 24)
+  if (ctx.ultimo_estado) {
+    parts.push(`- Último estado emocional registrado: ${ctx.ultimo_estado}`);
+  }
+  if (ctx.proximo_festivo) {
+    parts.push(
+      `- Próximo día festivo mexicano: ${ctx.proximo_festivo.name} (en ${ctx.proximo_festivo.days} día(s))`,
     );
-    prompt += `\nDías de sobriedad: ${days} días`;
   }
-
-  if (userContext.risk_level) {
-    prompt += `\nNivel de riesgo actual: ${userContext.risk_level}`;
-  }
-
-  if (userContext.emotional_state) {
-    prompt += `\nEstado emocional anterior: ${userContext.emotional_state}`;
-  }
-
-  prompt += `\n\nResponde siempre en español mexicano auténtico. Mantén respuestas concisas pero significativas. Sé empático y cálido.`;
-
-  return prompt;
-}
-
-async function callOpenRouter(
-  messages: ConversationMessage[],
-  systemPrompt: string
-): Promise<string> {
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${OPENROUTER_API_KEY}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": Deno.env.get("SUPABASE_URL") || "https://dryandHighFive.app",
-      "X-Title": "Dry & High Five Bot",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.0-flash-lite:free",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        ...messages,
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-    }),
-  });
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("OpenRouter error:", error);
-    throw new Error(`OpenRouter API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  if (!data.choices || !data.choices[0]?.message?.content) {
-    throw new Error("Invalid response from OpenRouter");
-  }
-
-  return data.choices[0].message.content;
+  return parts.join("\n");
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, {
-      status: 200,
-      headers: corsHeaders,
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+  if (!LOVABLE_API_KEY) {
+    return new Response(JSON.stringify({ error: "LOVABLE_API_KEY missing" }), {
+      status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
   try {
-    const payload: AIRequest = await req.json();
-
-    const { message, user_id, user_context } = payload;
-
-    if (!message || !user_id) {
-      return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
+    const { message, telegram_user_id }: AIRequest = await req.json();
+    if (!message || !telegram_user_id) {
+      return new Response(JSON.stringify({ error: "Missing fields" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    // Get conversation history
-    const history = await getConversationHistory(user_id);
+    // Load user
+    const { data: tgUser } = await supabase
+      .from("telegram_users")
+      .select("first_name, sobriety_start_date, emotional_state")
+      .eq("id", telegram_user_id)
+      .single();
 
-    // Add current message to history
-    const messages: ConversationMessage[] = [
-      ...history,
-      {
-        role: "user",
-        content: message,
+    // Load last 10 messages
+    const { data: history } = await supabase
+      .from("telegram_messages")
+      .select("message_type, content")
+      .eq("user_id", telegram_user_id)
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    // Find next holiday
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: holidays } = await supabase
+      .from("mexican_holidays")
+      .select("name, holiday_date")
+      .gte("holiday_date", today)
+      .order("holiday_date", { ascending: true })
+      .limit(1);
+
+    let nextHoliday: { name: string; days: number } | null = null;
+    if (holidays && holidays.length > 0) {
+      const days = Math.ceil(
+        (new Date(holidays[0].holiday_date).getTime() - Date.now()) / 86_400_000,
+      );
+      if (days <= 14) nextHoliday = { name: holidays[0].name, days };
+    }
+
+    const dias = tgUser?.sobriety_start_date
+      ? Math.floor((Date.now() - new Date(tgUser.sobriety_start_date).getTime()) / 86_400_000)
+      : null;
+
+    const systemPrompt = buildSystemPrompt({
+      nombre: tgUser?.first_name || "compa",
+      dias_sobriedad: dias,
+      ultimo_estado: tgUser?.emotional_state || null,
+      proximo_festivo: nextHoliday,
+    });
+
+    const conversationMessages = (history || [])
+      .reverse()
+      .map((m) => ({
+        role: m.message_type === "user" ? "user" : "assistant",
+        content: m.content,
+      }));
+
+    const aiResp = await fetch(LOVABLE_AI_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
       },
-    ];
-
-    // Build system prompt with context
-    const systemPrompt = buildSystemPrompt(user_context);
-
-    // Call OpenRouter API
-    const aiResponse = await callOpenRouter(messages, systemPrompt);
-
-    return new Response(
-      JSON.stringify({
-        response: aiResponse,
-        confidence: 0.95,
+      body: JSON.stringify({
+        model: MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...conversationMessages,
+          { role: "user", content: message },
+        ],
+        temperature: 0.8,
+        max_tokens: 500,
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    });
+
+    if (aiResp.status === 429) {
+      return new Response(JSON.stringify({ response: "Aguanta tantito, compa, tengo mucho trabajo ahorita. Intenta en un minuto. 🙏" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (aiResp.status === 402) {
+      return new Response(JSON.stringify({ response: "Necesito un respiro técnico. Intenta más tarde, compa. 🙏" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const data = await aiResp.json();
+    if (!aiResp.ok) {
+      console.error("AI error", data);
+      return new Response(JSON.stringify({ response: "Lo siento compa, tuve un problemita. Intenta de nuevo. 🙏" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const text = data.choices?.[0]?.message?.content || "Te escucho, compa. ¿Me cuentas más?";
+
+    return new Response(JSON.stringify({ response: text, confidence: 0.95 }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error("AI Agent error:", error);
+    console.error("ai-agent error", error);
     return new Response(
-      JSON.stringify({
-        error: String(error),
-        response:
-          "Lo siento, compa. Tuve un pequeño problema procesando eso. Intenta de nuevo.",
-      }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+      JSON.stringify({ response: "Algo se atravesó, compa. Échame otra vez. 🙏", error: String(error) }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
