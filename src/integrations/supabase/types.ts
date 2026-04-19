@@ -156,6 +156,44 @@ export type Database = {
           },
         ]
       }
+      emotional_logs: {
+        Row: {
+          created_at: string
+          emotion: string
+          id: string
+          intensity: number | null
+          notes: string | null
+          telegram_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          emotion: string
+          id?: string
+          intensity?: number | null
+          notes?: string | null
+          telegram_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          emotion?: string
+          id?: string
+          intensity?: number | null
+          notes?: string | null
+          telegram_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emotional_logs_telegram_user_id_fkey"
+            columns: ["telegram_user_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mexican_holidays: {
         Row: {
           alert_sent: boolean
@@ -163,6 +201,7 @@ export type Database = {
           description: string | null
           holiday_date: string
           id: string
+          is_high_risk: boolean
           name: string
         }
         Insert: {
@@ -171,6 +210,7 @@ export type Database = {
           description?: string | null
           holiday_date: string
           id?: string
+          is_high_risk?: boolean
           name: string
         }
         Update: {
@@ -179,32 +219,92 @@ export type Database = {
           description?: string | null
           holiday_date?: string
           id?: string
+          is_high_risk?: boolean
           name?: string
         }
         Relationships: []
       }
+      milestones: {
+        Row: {
+          celebrated: boolean
+          days_count: number
+          id: string
+          milestone_type: string
+          reached_at: string
+          telegram_user_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          celebrated?: boolean
+          days_count: number
+          id?: string
+          milestone_type: string
+          reached_at?: string
+          telegram_user_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          celebrated?: boolean
+          days_count?: number
+          id?: string
+          milestone_type?: string
+          reached_at?: string
+          telegram_user_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "milestones_telegram_user_id_fkey"
+            columns: ["telegram_user_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          check_in_evening: string
+          check_in_morning: string
           created_at: string
           display_name: string | null
+          gender: string | null
           id: string
+          name: string | null
+          onboarding_complete: boolean
+          sobriety_start_date: string | null
+          telegram_chat_id: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          check_in_evening?: string
+          check_in_morning?: string
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
+          name?: string | null
+          onboarding_complete?: boolean
+          sobriety_start_date?: string | null
+          telegram_chat_id?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          check_in_evening?: string
+          check_in_morning?: string
           created_at?: string
           display_name?: string | null
+          gender?: string | null
           id?: string
+          name?: string | null
+          onboarding_complete?: boolean
+          sobriety_start_date?: string | null
+          telegram_chat_id?: number | null
           updated_at?: string
           user_id?: string
         }
