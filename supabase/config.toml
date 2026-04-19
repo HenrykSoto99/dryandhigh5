@@ -1,1 +1,19 @@
 project_id = "pklpmvejnvyhwwpwqmoj"
+
+[functions.telegram-poll]
+verify_jwt = false
+
+[functions.telegram-router]
+verify_jwt = false
+
+[functions.telegram-send]
+verify_jwt = false
+
+[functions.ai-agent]
+verify_jwt = false
+
+[functions.scheduled-checkins]
+verify_jwt = false
+
+[functions.preventive-alerts]
+verify_jwt = false
