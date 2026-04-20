@@ -39,7 +39,7 @@ export default function SecuritySection({ language }: Props) {
     }
     const { error } = await supabase
       .from("bot_settings")
-      .update({ setting_value: num as any, updated_at: new Date().toISOString() })
+      .update({ setting_value: num as never, updated_at: new Date().toISOString() })
       .eq("setting_key", "admin_telegram_chat_id");
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
