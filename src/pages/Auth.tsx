@@ -24,7 +24,7 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/dashboard");
+        navigate("/admin");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -51,14 +51,14 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     const { lovable } = await import("@/integrations/lovable");
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+      redirect_uri: `${window.location.origin}/admin`,
     });
     if (result.error) {
       toast({ title: "Error", description: String(result.error), variant: "destructive" });
       return;
     }
     if (result.redirected) return;
-    navigate("/dashboard");
+    navigate("/admin");
   };
 
   return (
