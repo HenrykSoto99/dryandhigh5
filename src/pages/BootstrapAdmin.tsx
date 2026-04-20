@@ -70,8 +70,8 @@ const BootstrapAdmin = () => {
         <CardContent className="space-y-4 font-body">
           {isAdmin ? (
             <>
-              <p className="text-sm text-center">Ya tienes rol de administrador. ¡Vámonos al dashboard!</p>
-              <Button className="w-full" onClick={() => navigate("/dashboard")}>Ir al dashboard</Button>
+              <p className="text-sm text-center">Ya tienes rol de administrador. ¡Vámonos al panel!</p>
+              <Button className="w-full" onClick={() => navigate("/admin")}>Ir al panel</Button>
             </>
           ) : hasAnyAdmin === false ? (
             <>
