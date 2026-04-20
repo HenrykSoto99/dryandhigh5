@@ -10,7 +10,8 @@ import HolidaysSection from "@/components/admin/HolidaysSection";
 import TemplatesSection from "@/components/admin/TemplatesSection";
 import EventsSection from "@/components/admin/EventsSection";
 import SuccessStoriesPanel from "@/components/admin/SuccessStoriesPanel";
-import { useCrisisFlags } from "@/hooks/useAdminData";
+import SecuritySection from "@/components/admin/SecuritySection";
+import { useCrisisFlags, useSecurityAlerts } from "@/hooks/useAdminData";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
   const [section, setSection] = useState<AdminSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: unresolvedCrisis = [] } = useCrisisFlags(true);
+  const { data: unresolvedSecurity = [] } = useSecurityAlerts(true);
 
   if (loading) {
     return (
@@ -38,12 +40,9 @@ export default function AdminDashboard() {
           <CardContent className="p-6 text-center space-y-3">
             <h2 className="font-display text-xl text-destructive">Acceso restringido</h2>
             <p className="text-sm text-muted-foreground">
-              Necesitas el rol de administrador para ver este panel. Si eres el primer usuario, puedes reclamar el rol abajo.
+              Este panel está reservado para el dueño de la app. Si crees que debes tener acceso, contacta al administrador.
             </p>
             <div className="flex gap-2 justify-center">
-              <Button onClick={() => navigate("/bootstrap-admin")} className="bg-gold hover:bg-gold/90 text-charcoal">
-                Reclamar admin
-              </Button>
               <Button variant="outline" onClick={() => navigate("/")}>Inicio</Button>
             </div>
           </CardContent>
@@ -60,6 +59,7 @@ export default function AdminDashboard() {
     holidays: ["Holidays", "Festivos"],
     templates: ["Templates", "Plantillas"],
     events: ["Events Log", "Registro de Eventos"],
+    security: ["Security", "Seguridad"],
     settings: ["Settings", "Configuración"],
   };
   const title = language === "es" ? titles[section][1] : titles[section][0];
@@ -73,6 +73,7 @@ export default function AdminDashboard() {
           language={language}
           isOpen={sidebarOpen}
           crisisCount={unresolvedCrisis.length}
+          securityCount={unresolvedSecurity.length}
         />
 
         {sidebarOpen && (
@@ -109,6 +110,7 @@ export default function AdminDashboard() {
             {section === "holidays" && <HolidaysSection language={language} />}
             {section === "templates" && <TemplatesSection language={language} />}
             {section === "events" && <EventsSection language={language} />}
+            {section === "security" && <SecuritySection language={language} />}
             {section === "settings" && (
               <Card className="border-gold/20">
                 <CardContent className="p-8 text-center text-muted-foreground">
