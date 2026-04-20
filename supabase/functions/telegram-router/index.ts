@@ -62,7 +62,44 @@ Deno.serve(async (req: Request) => {
 
     const { message } = update;
     const chatId = message.chat.id;
-    const text = message.text.trim();
+    // Sanitize: strip control chars + zero-widths, hard-cap length.
+    const text = message.text
+      .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E\uFEFF]/g, "")
+      .trim()
+      .slice(0, 2000);
+
+    if (!text) return new Response(JSON.stringify({ ok: true }));
+
+    // Per-user soft rate limit: max 30 messages / 60s window
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("telegram_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("message_type", "user")
+      .gte("created_at", since)
+      .in(
+        "user_id",
+        await supabase
+          .from("telegram_users")
+          .select("id")
+          .eq("telegram_user_id", message.from.id)
+          .then((r) => (r.data || []).map((u: { id: string }) => u.id)),
+      );
+
+    if ((recentCount ?? 0) > 30) {
+      await supabase.from("security_alerts").insert({
+        alert_type: "rate_limit_exceeded",
+        severity: "warning",
+        summary: "Posible flood / abuso del bot",
+        details: {
+          telegram_user_id: message.from.id,
+          username: message.from.username,
+          messages_last_minute: recentCount,
+        },
+      });
+      // Silent drop to avoid amplification.
+      return new Response(JSON.stringify({ ok: true, throttled: true }));
+    }
 
     const { data: existingUser } = await supabase
       .from("telegram_users")
