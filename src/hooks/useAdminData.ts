@@ -140,3 +140,21 @@ export function useBotSettings(key: string) {
     },
   });
 }
+
+export function useSecurityAlerts(onlyUnresolved = false) {
+  return useQuery({
+    queryKey: ["security_alerts", onlyUnresolved],
+    queryFn: async () => {
+      let q = supabase
+        .from("security_alerts" as never)
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (onlyUnresolved) q = (q as any).eq("resolved", false);
+      const { data, error } = await q;
+      if (error) throw error;
+      return (data as any[]) || [];
+    },
+    refetchInterval: 15_000,
+  });
+}

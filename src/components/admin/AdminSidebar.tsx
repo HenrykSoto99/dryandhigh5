@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Megaphone, Calendar, MessageSquare, AlertTriangle, FileText, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Megaphone, Calendar, MessageSquare, AlertTriangle, FileText, Settings, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import mascotImg from "@/assets/mascot.jpg";
 
@@ -10,6 +10,7 @@ export type AdminSection =
   | "holidays"
   | "templates"
   | "events"
+  | "security"
   | "settings";
 
 interface NavItem {
@@ -26,13 +27,15 @@ interface Props {
   language: "en" | "es";
   isOpen: boolean;
   crisisCount: number;
+  securityCount?: number;
 }
 
-export default function AdminSidebar({ active, onSelect, language, isOpen, crisisCount }: Props) {
+export default function AdminSidebar({ active, onSelect, language, isOpen, crisisCount, securityCount = 0 }: Props) {
   const items: NavItem[] = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard", labelEs: "Panel" },
     { id: "users", icon: Users, label: "Users", labelEs: "Usuarios" },
     { id: "crisis", icon: AlertTriangle, label: "Crisis Alerts", labelEs: "Alertas Crisis", badge: crisisCount },
+    { id: "security", icon: Shield, label: "Security", labelEs: "Seguridad", badge: securityCount },
     { id: "broadcast", icon: Megaphone, label: "Broadcast", labelEs: "Difusión" },
     { id: "holidays", icon: Calendar, label: "Holidays", labelEs: "Festivos" },
     { id: "templates", icon: MessageSquare, label: "Templates", labelEs: "Plantillas" },

@@ -310,6 +310,56 @@ export type Database = {
         }
         Relationships: []
       }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          details: Json
+          id: string
+          notified: boolean
+          notified_at: string | null
+          resolved: boolean
+          resolved_at: string | null
+          severity: string
+          source_telegram_user_id: string | null
+          summary: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          details?: Json
+          id?: string
+          notified?: boolean
+          notified_at?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source_telegram_user_id?: string | null
+          summary: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          details?: Json
+          id?: string
+          notified?: boolean
+          notified_at?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          severity?: string
+          source_telegram_user_id?: string | null
+          summary?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "security_alerts_source_telegram_user_id_fkey"
+            columns: ["source_telegram_user_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       telegram_bot_state: {
         Row: {
           id: number

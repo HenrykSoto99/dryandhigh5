@@ -62,7 +62,13 @@ Deno.serve(async (req: Request) => {
 
     const { message } = update;
     const chatId = message.chat.id;
-    const text = message.text.trim();
+    // Sanitize: strip control chars + zero-widths, hard-cap length.
+    const text = message.text
+      .replace(/[\u0000-\u001F\u007F\u200B-\u200F\u202A-\u202E\uFEFF]/g, "")
+      .trim()
+      .slice(0, 2000);
+
+    if (!text) return new Response(JSON.stringify({ ok: true }));
 
     const { data: existingUser } = await supabase
       .from("telegram_users")
@@ -88,6 +94,30 @@ Deno.serve(async (req: Request) => {
 
     if (!user) {
       return new Response(JSON.stringify({ error: "user create failed" }), { status: 500 });
+    }
+
+    // Per-user soft rate limit: max 30 user messages / 60s window
+    const since = new Date(Date.now() - 60_000).toISOString();
+    const { count: recentCount } = await supabase
+      .from("telegram_messages")
+      .select("id", { count: "exact", head: true })
+      .eq("message_type", "user")
+      .eq("user_id", user.id)
+      .gte("created_at", since);
+
+    if ((recentCount ?? 0) > 30) {
+      await supabase.from("security_alerts").insert({
+        alert_type: "rate_limit_exceeded",
+        severity: "warning",
+        summary: "Posible flood / abuso del bot",
+        details: {
+          telegram_user_id: message.from.id,
+          username: message.from.username,
+          messages_last_minute: recentCount,
+        },
+        source_telegram_user_id: user.id,
+      });
+      return new Response(JSON.stringify({ ok: true, throttled: true }));
     }
 
     await supabase.from("telegram_messages").insert({
