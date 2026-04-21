@@ -13,7 +13,12 @@ export function useAdminGuard() {
     const check = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        if (mounted) navigate("/auth");
+        if (mounted) {
+          setIsAdmin(false);
+          setUserId(null);
+          setLoading(false);
+          navigate("/auth", { replace: true });
+        }
         return;
       }
       if (mounted) setUserId(session.user.id);
@@ -30,7 +35,12 @@ export function useAdminGuard() {
     };
     check();
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session) navigate("/auth");
+      if (!session) {
+        setIsAdmin(false);
+        setUserId(null);
+        setLoading(false);
+        navigate("/auth", { replace: true });
+      }
     });
     return () => {
       mounted = false;
