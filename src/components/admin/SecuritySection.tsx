@@ -51,8 +51,8 @@ export default function SecuritySection({ language }: Props) {
 
   const resolveAlert = async (id: string) => {
     const { error } = await supabase
-      .from("security_alerts" as never)
-      .update({ resolved: true, resolved_at: new Date().toISOString() } as any)
+      .from("security_alerts")
+      .update({ resolved: true, resolved_at: new Date().toISOString() })
       .eq("id", id);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
