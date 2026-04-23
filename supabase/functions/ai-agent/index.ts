@@ -230,7 +230,7 @@ Deno.serve(async (req: Request) => {
   } catch (error) {
     console.error("ai-agent error", error);
     return new Response(
-      JSON.stringify({ response: "Algo se atravesó, compa. Échame otra vez. 🙏", error: String(error) }),
+      JSON.stringify({ response: "Algo se atravesó, compa. Échame otra vez. 🙏" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
