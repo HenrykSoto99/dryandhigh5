@@ -13,17 +13,46 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // If user is already logged in (e.g. returning from Google OAuth), go to /admin
+  const redirectByRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!error && data?.role === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+
+    navigate("/dashboard", { replace: true });
+  };
+
+  // If user is already logged in, send them to the correct area by role
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted && session) navigate("/admin", { replace: true });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+
+      if (session) {
+        await redirectByRole(session.user.id);
+        return;
+      }
+
+      setRoleLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate("/admin", { replace: true });
+      if (session) {
+        void redirectByRole(session.user.id);
+        return;
+      }
+
+      if (mounted) setRoleLoading(false);
     });
     return () => {
       mounted = false;
@@ -39,7 +68,6 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/admin");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -96,7 +124,7 @@ const Auth = () => {
           <img src={mascotImg} alt="Dry & High Five" className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-primary object-cover" />
           <CardTitle className="font-display text-2xl">Dry & High Five 🚫🍺</CardTitle>
           <CardDescription className="font-body">
-            {isLogin ? "Inicia sesión en el panel de administración" : "Crea tu cuenta de administrador"}
+            {isLogin ? "Inicia sesión para entrar a tu espacio" : "Crea tu cuenta para llevar tu proceso"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -152,6 +180,10 @@ const Auth = () => {
               {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
             </Button>
           </form>
+
+          {roleLoading && isLogin ? (
+            <p className="text-center text-xs font-body text-muted-foreground">Verificando acceso…</p>
+          ) : null}
 
           <p className="text-center text-sm font-body text-muted-foreground">
             {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}

@@ -25,7 +25,7 @@ const Index = () => (
             <a href="https://t.me/DryandHighFiveAABot" target="_blank" rel="noreferrer">Abrir bot en Telegram</a>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-gold/40 text-gold hover:bg-gold/10">
-            <Link to="/admin">Panel privado</Link>
+            <Link to="/auth">Entrar / crear cuenta</Link>
           </Button>
         </div>
 
