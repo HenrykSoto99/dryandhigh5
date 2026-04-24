@@ -13,17 +13,46 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const redirectByRole = async (userId: string) => {
+    const { data, error } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!error && data?.role === "admin") {
+      navigate("/admin", { replace: true });
+      return;
+    }
+
+    navigate("/dashboard", { replace: true });
+  };
 
   // If user is already logged in (e.g. returning from Google OAuth), go to /admin
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (mounted && session) navigate("/admin", { replace: true });
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
+
+      if (session) {
+        await redirectByRole(session.user.id);
+        return;
+      }
+
+      setRoleLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) navigate("/admin", { replace: true });
+      if (session) {
+        void redirectByRole(session.user.id);
+        return;
+      }
+
+      if (mounted) setRoleLoading(false);
     });
     return () => {
       mounted = false;
@@ -39,7 +68,6 @@ const Auth = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate("/admin");
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -152,6 +180,10 @@ const Auth = () => {
               {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
             </Button>
           </form>
+
+          {roleLoading && isLogin ? (
+            <p className="text-center text-xs font-body text-muted-foreground">Verificando acceso…</p>
+          ) : null}
 
           <p className="text-center text-sm font-body text-muted-foreground">
             {isLogin ? "¿No tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
