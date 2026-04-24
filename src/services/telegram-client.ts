@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/safe-client';
 import type { Json } from '@/integrations/supabase/types';
 
 export interface TelegramUser {

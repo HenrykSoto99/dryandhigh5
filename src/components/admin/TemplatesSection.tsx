@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safe-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBotSettings } from "@/hooks/useAdminData";
 import { toast } from "sonner";

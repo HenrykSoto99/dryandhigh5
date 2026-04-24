@@ -1,6 +1,6 @@
 import { Menu, Globe, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safe-client";
 import { useNavigate } from "react-router-dom";
 
 interface Props {

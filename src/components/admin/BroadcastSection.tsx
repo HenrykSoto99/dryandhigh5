@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTelegramUsers, useBroadcasts } from "@/hooks/useAdminData";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/safe-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Send, Eye } from "lucide-react";
