@@ -33,7 +33,7 @@ const Auth = () => {
     navigate("/dashboard", { replace: true });
   };
 
-  // If user is already logged in (e.g. returning from Google OAuth), go to /admin
+  // If user is already logged in, send them to the correct area by role
   useEffect(() => {
     let mounted = true;
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -124,7 +124,7 @@ const Auth = () => {
           <img src={mascotImg} alt="Dry & High Five" className="w-20 h-20 rounded-full mx-auto mb-3 border-2 border-primary object-cover" />
           <CardTitle className="font-display text-2xl">Dry & High Five 🚫🍺</CardTitle>
           <CardDescription className="font-body">
-            {isLogin ? "Inicia sesión en el panel de administración" : "Crea tu cuenta de administrador"}
+            {isLogin ? "Inicia sesión para entrar a tu espacio" : "Crea tu cuenta para llevar tu proceso"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
