@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,21 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // If user is already logged in (e.g. returning from Google OAuth), go to /admin
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (mounted && session) navigate("/admin", { replace: true });
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      if (session) navigate("/admin", { replace: true });
+    });
+    return () => {
+      mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,16 +64,29 @@ const Auth = () => {
   };
 
   const handleGoogleLogin = async () => {
-    const { lovable } = await import("@/integrations/lovable");
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/admin`,
-    });
-    if (result.error) {
-      toast({ title: "Error", description: String(result.error), variant: "destructive" });
-      return;
+    try {
+      const { lovable } = await import("@/integrations/lovable");
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: `${window.location.origin}/auth`,
+      });
+      if (result.error) {
+        toast({
+          title: "Error con Google",
+          description: result.error instanceof Error ? result.error.message : String(result.error),
+          variant: "destructive",
+        });
+        return;
+      }
+      if (result.redirected) return;
+      // Tokens already set — go to admin
+      navigate("/admin", { replace: true });
+    } catch (err: any) {
+      toast({
+        title: "Error con Google",
+        description: err?.message ?? "No se pudo iniciar sesión con Google",
+        variant: "destructive",
+      });
     }
-    if (result.redirected) return;
-    navigate("/admin");
   };
 
   return (
