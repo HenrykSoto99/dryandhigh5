@@ -22,7 +22,7 @@ const Index = () => (
 
         <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild size="lg" className="bg-gold hover:bg-gold/90 text-charcoal font-semibold">
-            <a href="https://t.me/DryHighFiveBot" target="_blank" rel="noreferrer">Abrir bot en Telegram</a>
+            <a href="https://t.me/DryandHighFiveAABot" target="_blank" rel="noreferrer">Abrir bot en Telegram</a>
           </Button>
           <Button asChild size="lg" variant="outline" className="border-gold/40 text-gold hover:bg-gold/10">
             <Link to="/admin">Panel privado</Link>
