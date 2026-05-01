@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/safe-client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,20 +93,17 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: `${window.location.origin}/auth` },
       });
-      if (result.error) {
+      if (error) {
         toast({
           title: "Error con Google",
-          description: result.error instanceof Error ? result.error.message : String(result.error),
+          description: error.message,
           variant: "destructive",
         });
-        return;
       }
-      if (result.redirected) return;
-      // Tokens already set — go to admin
-      navigate("/admin", { replace: true });
     } catch (err: any) {
       toast({
         title: "Error con Google",
