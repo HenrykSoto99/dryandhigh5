@@ -4,15 +4,11 @@ import { supabase } from "@/integrations/supabase/safe-client";
 
 const lovableAuth = createLovableAuth();
 
-type OAuthResult =
-  | { redirected: true; error?: undefined }
-  | { redirected?: false; error?: Error | unknown; tokens?: Session };
-
 export async function signInWithManagedGoogle() {
   const result = (await lovableAuth.signInWithOAuth("google", {
     redirect_uri: window.location.origin,
     extraParams: { prompt: "select_account" },
-  })) as OAuthResult;
+  })) as { redirected?: boolean; error?: Error | unknown; tokens?: Session };
 
   if (result.redirected || result.error) return result;
 
