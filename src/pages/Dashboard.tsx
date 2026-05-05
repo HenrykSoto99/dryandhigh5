@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarDays, HeartHandshake, LineChart, LogOut, ShieldCheck, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safe-client";
+import { ensureMemberProfile } from "@/lib/auth-profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +37,8 @@ const Dashboard = () => {
         }
         return;
       }
+
+      await ensureMemberProfile(session.user);
 
       const [{ data: roleData, error: roleError }, { data: profileData, error: profileError }] = await Promise.all([
         supabase
