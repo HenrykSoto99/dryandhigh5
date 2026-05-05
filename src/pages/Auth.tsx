@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/safe-client";
-import { lovable } from "@/integrations/lovable";
+import { ensureMemberProfile } from "@/lib/auth-profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,24 +34,24 @@ const Auth = () => {
     navigate("/dashboard", { replace: true });
   };
 
+  const finishSignedInUser = async (session: Awaited<ReturnType<typeof supabase.auth.getSession>>["data"]["session"]) => {
+    if (!session) return;
+    await ensureMemberProfile(session.user);
+    await redirectByRole(session.user.id);
+  };
+
   // If user is already logged in, send them to the correct area by role
   useEffect(() => {
     let mounted = true;
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!mounted) return;
 
-      if (session) {
-        await redirectByRole(session.user.id);
-        return;
-      }
+      if (session) return finishSignedInUser(session);
 
       setRoleLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (session) {
-        void redirectByRole(session.user.id);
-        return;
-      }
+      if (session) return void finishSignedInUser(session);
 
       if (mounted) setRoleLoading(false);
     });
@@ -94,8 +94,10 @@ const Auth = () => {
 
   const handleGoogleLogin = async () => {
     try {
+      const { lovable } = await import("@/integrations/lovable");
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/auth`,
+        redirect_uri: window.location.origin,
+        extraParams: { prompt: "select_account" },
       });
       if (result.error) {
         toast({
