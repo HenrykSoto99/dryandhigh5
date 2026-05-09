@@ -132,13 +132,23 @@ export default function AdminDashboard() {
             {section === "events" && <EventsSection language={language} />}
             {section === "security" && <SecuritySection language={language} />}
             {section === "settings" && (
-              <Card className="border-gold/20">
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  {language === "es"
-                    ? "Configuración avanzada próximamente."
-                    : "Advanced settings coming soon."}
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                {meId && meProfile ? (
+                  <ProfileEditor
+                    userId={meId}
+                    initialDisplayName={meProfile.display_name}
+                    initialName={meProfile.name}
+                    initialAvatarUrl={meProfile.avatar_url}
+                    onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
+                  />
+                ) : (
+                  <Card className="border-gold/20">
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      {language === "es" ? "Cargando tu perfil…" : "Loading your profile…"}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </main>
         </div>
