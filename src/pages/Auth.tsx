@@ -166,15 +166,26 @@ const Auth = () => {
             </div>
             <div>
               <Label htmlFor="password" className="font-body text-xs">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                className="font-body"
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="font-body pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((s) => !s)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" className="w-full font-body" disabled={loading}>
               {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
