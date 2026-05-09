@@ -175,7 +175,21 @@ const Dashboard = () => {
         </Card>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-10 lg:grid-cols-[1.2fr_0.8fr]">
+      {userId ? (
+        <section className="mx-auto max-w-6xl px-6 pb-2">
+          <ProfileEditor
+            userId={userId}
+            initialDisplayName={profile?.display_name ?? null}
+            initialName={profile?.name ?? null}
+            initialAvatarUrl={profile?.avatar_url ?? null}
+            onUpdated={(data) =>
+              setProfile((prev) => (prev ? { ...prev, ...data } : prev))
+            }
+          />
+        </section>
+      ) : null}
+
+      <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-10 pt-6 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 font-display text-2xl"><HeartHandshake className="h-5 w-5 text-primary" />Tu recorrido</CardTitle>
