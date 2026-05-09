@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
@@ -11,10 +11,12 @@ import TemplatesSection from "@/components/admin/TemplatesSection";
 import EventsSection from "@/components/admin/EventsSection";
 import SuccessStoriesPanel from "@/components/admin/SuccessStoriesPanel";
 import SecuritySection from "@/components/admin/SecuritySection";
+import ProfileEditor from "@/components/dashboard/ProfileEditor";
 import { useCrisisFlags, useSecurityAlerts } from "@/hooks/useAdminData";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/safe-client";
 
 export default function AdminDashboard() {
   const { loading, isAdmin } = useAdminGuard();
@@ -24,6 +26,24 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: unresolvedCrisis = [] } = useCrisisFlags(true);
   const { data: unresolvedSecurity = [] } = useSecurityAlerts(true);
+  const [meId, setMeId] = useState<string | null>(null);
+  const [meProfile, setMeProfile] = useState<{ display_name: string | null; name: string | null; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !mounted) return;
+      setMeId(session.user.id);
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, name, avatar_url")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (mounted) setMeProfile(data ?? { display_name: null, name: null, avatar_url: null });
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   if (loading) {
     return (
@@ -112,13 +132,23 @@ export default function AdminDashboard() {
             {section === "events" && <EventsSection language={language} />}
             {section === "security" && <SecuritySection language={language} />}
             {section === "settings" && (
-              <Card className="border-gold/20">
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  {language === "es"
-                    ? "Configuración avanzada próximamente."
-                    : "Advanced settings coming soon."}
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                {meId && meProfile ? (
+                  <ProfileEditor
+                    userId={meId}
+                    initialDisplayName={meProfile.display_name}
+                    initialName={meProfile.name}
+                    initialAvatarUrl={meProfile.avatar_url}
+                    onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
+                  />
+                ) : (
+                  <Card className="border-gold/20">
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                      {language === "es" ? "Cargando tu perfil…" : "Loading your profile…"}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
             )}
           </main>
         </div>
