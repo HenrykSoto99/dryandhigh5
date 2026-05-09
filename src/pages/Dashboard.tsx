@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import ProfileEditor from "@/components/dashboard/ProfileEditor";
 
 type MemberProfile = {
   display_name: string | null;
   name: string | null;
+  avatar_url: string | null;
   sobriety_start_date: string | null;
   check_in_morning: string;
   check_in_evening: string;
