@@ -26,6 +26,24 @@ export default function AdminDashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: unresolvedCrisis = [] } = useCrisisFlags(true);
   const { data: unresolvedSecurity = [] } = useSecurityAlerts(true);
+  const [meId, setMeId] = useState<string | null>(null);
+  const [meProfile, setMeProfile] = useState<{ display_name: string | null; name: string | null; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session || !mounted) return;
+      setMeId(session.user.id);
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, name, avatar_url")
+        .eq("user_id", session.user.id)
+        .maybeSingle();
+      if (mounted) setMeProfile(data ?? { display_name: null, name: null, avatar_url: null });
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   if (loading) {
     return (
