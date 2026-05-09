@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAdminGuard } from "@/hooks/useAdminGuard";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminSidebar, { AdminSection } from "@/components/admin/AdminSidebar";
@@ -11,10 +11,12 @@ import TemplatesSection from "@/components/admin/TemplatesSection";
 import EventsSection from "@/components/admin/EventsSection";
 import SuccessStoriesPanel from "@/components/admin/SuccessStoriesPanel";
 import SecuritySection from "@/components/admin/SecuritySection";
+import ProfileEditor from "@/components/dashboard/ProfileEditor";
 import { useCrisisFlags, useSecurityAlerts } from "@/hooks/useAdminData";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/safe-client";
 
 export default function AdminDashboard() {
   const { loading, isAdmin } = useAdminGuard();
