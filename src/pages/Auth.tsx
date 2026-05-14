@@ -215,6 +215,16 @@ const Auth = () => {
             </Button>
           </form>
 
+          {isLogin ? (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="block w-full text-center text-xs font-body text-primary hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          ) : null}
+
           {roleLoading && isLogin ? (
             <p className="text-center text-xs font-body text-muted-foreground">Verificando acceso…</p>
           ) : null}
