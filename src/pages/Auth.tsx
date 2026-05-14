@@ -117,6 +117,29 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast({
+        title: "Escribe tu email",
+        description: "Necesitamos tu correo para enviarte el enlace de recuperación.",
+        variant: "destructive",
+      });
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      toast({
+        title: "Revisa tu correo 📩",
+        description: "Te enviamos un enlace seguro para restablecer tu contraseña.",
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md border-primary/20">
@@ -191,6 +214,16 @@ const Auth = () => {
               {loading ? "Cargando..." : isLogin ? "Iniciar Sesión" : "Crear Cuenta"}
             </Button>
           </form>
+
+          {isLogin ? (
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              className="block w-full text-center text-xs font-body text-primary hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          ) : null}
 
           {roleLoading && isLogin ? (
             <p className="text-center text-xs font-body text-muted-foreground">Verificando acceso…</p>
