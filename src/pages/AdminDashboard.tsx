@@ -144,6 +144,7 @@ export default function AdminDashboard() {
                     initialDisplayName={meProfile.display_name}
                     initialName={meProfile.name}
                     initialAvatarUrl={meProfile.avatar_url}
+                    initialEmergencyConsent={meProfile.emergency_contact_consent ?? false}
                     onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
                   />
                 ) : (
