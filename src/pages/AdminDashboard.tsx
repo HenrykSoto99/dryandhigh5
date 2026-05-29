@@ -112,6 +112,8 @@ export default function AdminDashboard() {
             language={language}
             onToggleLanguage={() => setLanguage((l) => (l === "en" ? "es" : "en"))}
             title={title}
+            profile={meProfile}
+            onOpenProfile={() => setSection("settings")}
           />
 
           <main className="flex-1 p-4 lg:p-6 space-y-6 overflow-x-hidden">
