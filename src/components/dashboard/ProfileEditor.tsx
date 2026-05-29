@@ -185,12 +185,42 @@ const ProfileEditor = ({
               maxLength={80}
               className="font-body"
             />
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <div className="flex-1 space-y-2">
+              <p className="font-display text-sm font-semibold text-foreground">
+                Consentimiento de contacto en emergencia
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                En caso de detectar una crisis con riesgo vital (atentar contra tu vida), autorizas
+                que el equipo te canalice con las autoridades correspondientes (Línea de la Vida,
+                SAPTEL o servicios de emergencia). Puedes desactivarlo cuando quieras.
+              </p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={emergencyConsent}
+                  onCheckedChange={(v) => setEmergencyConsent(v === true)}
+                />
+                <span className="font-body text-sm text-foreground">
+                  Doy mi consentimiento para ser contactado/canalizado en una emergencia
+                </span>
+              </label>
+            </div>
           </div>
         </div>
 
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           Guardar cambios
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
+export default ProfileEditor;
+
         </Button>
       </CardContent>
     </Card>
