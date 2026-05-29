@@ -101,7 +101,7 @@ Deno.serve(async (req: Request) => {
           telegram_user_id: message.from.id,
           telegram_chat_id: chatId,
           telegram_username: message.from.username,
-          first_name: message.from.first_name,
+          first_name: sanitizeName(message.from.first_name || ""),
           onboarding_step: "ask_name",
         })
         .select()
