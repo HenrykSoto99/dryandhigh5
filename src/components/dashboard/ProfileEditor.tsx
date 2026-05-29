@@ -18,7 +18,8 @@ interface ProfileEditorProps {
   onUpdated: (data: { display_name: string | null; name: string | null; avatar_url: string | null; emergency_contact_consent?: boolean }) => void;
 }
 
-
+const ProfileEditor = ({
+  userId,
   initialDisplayName,
   initialName,
   initialAvatarUrl,
@@ -34,9 +35,6 @@ interface ProfileEditorProps {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
 
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
