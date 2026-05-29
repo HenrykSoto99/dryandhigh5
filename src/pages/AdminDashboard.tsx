@@ -32,6 +32,15 @@ export default function AdminDashboard() {
   const [meId, setMeId] = useState<string | null>(null);
   const [meProfile, setMeProfile] = useState<{ display_name: string | null; name: string | null; avatar_url: string | null; emergency_contact_consent?: boolean } | null>(null);
 
+  const refreshAdminProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, name, avatar_url, emergency_contact_consent")
+      .eq("user_id", userId)
+      .maybeSingle();
+    setMeProfile(data ?? { display_name: null, name: null, avatar_url: null, emergency_contact_consent: false });
+  };
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -40,12 +49,7 @@ export default function AdminDashboard() {
       setMeId(session.user.id);
       // Ensure profile row exists for admin (handle_new_user covers new signups; this covers older accounts)
       await ensureMemberProfile(session.user);
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, name, avatar_url, emergency_contact_consent")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      if (mounted) setMeProfile(data ?? { display_name: null, name: null, avatar_url: null, emergency_contact_consent: false });
+      if (mounted) await refreshAdminProfile(session.user.id);
     })();
     return () => { mounted = false; };
   }, []);
@@ -150,6 +154,9 @@ export default function AdminDashboard() {
                     onUpdated={(data) => {
                       setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }));
                       queryClient.invalidateQueries({ queryKey: ["telegram_users"] });
+                      queryClient.invalidateQueries({ queryKey: ["crisis_flags"] });
+                      queryClient.invalidateQueries({ queryKey: ["bot_events"] });
+                      if (meId) void refreshAdminProfile(meId);
                     }}
                   />
                 ) : (
