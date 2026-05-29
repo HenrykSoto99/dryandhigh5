@@ -84,12 +84,17 @@ const ProfileEditor = ({
   const handleSave = async () => {
     setSaving(true);
     try {
+      const consentChanged = emergencyConsent !== initialEmergencyConsent;
       const { error } = await supabase
         .from("profiles")
         .update({
           display_name: displayName.trim() || null,
           name: name.trim() || null,
-        })
+          emergency_contact_consent: emergencyConsent,
+          ...(consentChanged
+            ? { emergency_contact_consent_at: emergencyConsent ? new Date().toISOString() : null }
+            : {}),
+        } as any)
         .eq("user_id", userId);
 
       if (error) throw error;
@@ -98,6 +103,7 @@ const ProfileEditor = ({
         display_name: displayName.trim() || null,
         name: name.trim() || null,
         avatar_url: avatarUrl || null,
+        emergency_contact_consent: emergencyConsent,
       });
       toast({ title: "Perfil actualizado", description: "Tus cambios se guardaron." });
     } catch (err: any) {
@@ -110,6 +116,7 @@ const ProfileEditor = ({
       setSaving(false);
     }
   };
+
 
   const initials = (displayName || name || "U")
     .split(" ")
