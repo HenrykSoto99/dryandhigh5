@@ -13,6 +13,7 @@ import SuccessStoriesPanel from "@/components/admin/SuccessStoriesPanel";
 import SecuritySection from "@/components/admin/SecuritySection";
 import ProfileEditor from "@/components/dashboard/ProfileEditor";
 import { useCrisisFlags, useSecurityAlerts } from "@/hooks/useAdminData";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
