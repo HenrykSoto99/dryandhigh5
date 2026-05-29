@@ -81,14 +81,24 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    const parsed = credentialsSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      toast({
+        title: "Datos inválidos",
+        description: parsed.error.errors[0]?.message ?? "Revisa el formulario",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword(parsed.data);
         if (error) throw error;
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          ...parsed.data,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
@@ -107,6 +117,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
 
   const handleGoogleLogin = async () => {
     try {
