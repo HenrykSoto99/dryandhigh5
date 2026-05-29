@@ -52,7 +52,8 @@ const Dashboard = () => {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("display_name, name, avatar_url, sobriety_start_date, check_in_morning, check_in_evening, onboarding_complete")
+          .select("display_name, name, avatar_url, sobriety_start_date, check_in_morning, check_in_evening, onboarding_complete, emergency_contact_consent")
+
           .eq("user_id", session.user.id)
           .maybeSingle(),
       ]);
