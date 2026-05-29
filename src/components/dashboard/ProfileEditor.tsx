@@ -19,17 +19,21 @@ interface ProfileEditorProps {
 }
 
 
-const ProfileEditor = ({
-  userId,
   initialDisplayName,
   initialName,
   initialAvatarUrl,
+  initialEmergencyConsent = false,
   onUpdated,
 }: ProfileEditorProps) => {
   const { toast } = useToast();
   const fileRef = useRef<HTMLInputElement>(null);
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
   const [name, setName] = useState(initialName ?? "");
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [emergencyConsent, setEmergencyConsent] = useState(initialEmergencyConsent);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
