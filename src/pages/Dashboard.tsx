@@ -121,34 +121,63 @@ const Dashboard = () => {
     setCancelling(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from("security_alerts").insert({
+      const cancelledAt = new Date().toISOString();
+
+      // 1) Mark profile as inactive
+      const { error: profileErr } = await supabase
+        .from("profiles")
+        .update({ is_active: false, cancelled_at: cancelledAt })
+        .eq("user_id", userId);
+      if (profileErr) throw profileErr;
+
+      // 2) Log security alert for admin tracking
+      const { error: alertErr } = await supabase.from("security_alerts").insert({
         alert_type: "subscription_cancellation_request",
         severity: "warning",
-        summary: "Solicitud de cancelación de suscripción",
+        summary: "Miembro canceló su suscripción",
         details: {
           user_id: userId,
           email: user?.email ?? null,
           display_name: profile?.display_name ?? profile?.name ?? null,
-          requested_at: new Date().toISOString(),
+          requested_at: cancelledAt,
         },
       });
-      if (error) throw error;
+      if (alertErr) throw alertErr;
+
+      // 3) Fire-and-forget admin notification email (won't block flow if not configured yet)
+      try {
+        await supabase.functions.invoke("send-transactional-email", {
+          body: {
+            templateName: "member-cancellation-admin",
+            recipientEmail: "henryk.soto@gmail.com",
+            idempotencyKey: `cancel-${userId}-${cancelledAt}`,
+            templateData: {
+              memberEmail: user?.email ?? "desconocido",
+              memberName: profile?.display_name ?? profile?.name ?? "Miembro",
+              cancelledAt,
+            },
+          },
+        });
+      } catch (mailErr) {
+        console.warn("Admin email failed (non-blocking):", mailErr);
+      }
+
       toast({
-        title: "Solicitud enviada",
-        description: "Hemos recibido tu cancelación. Un administrador te contactará pronto, compa.",
+        title: "Cancelación procesada",
+        description: "Tu cuenta quedó marcada como inactiva. ¡Gracias por tu paso, compa!",
       });
       await supabase.auth.signOut();
       navigate("/auth", { replace: true });
     } catch (err: any) {
       toast({
-        title: "No se pudo enviar la solicitud",
+        title: "No se pudo cancelar",
         description: err?.message ?? "Intenta de nuevo en unos minutos.",
         variant: "destructive",
       });
     } finally {
       setCancelling(false);
     }
-  };
+
 
 
   const streakDays = useMemo(() => {
