@@ -1,6 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendTelegram, daysSince, parseDateMx } from "../_shared/telegram.ts";
+import { requireInternalSecret } from "../_shared/auth.ts";
+
+const INJECTION_PATTERNS = [
+  /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts?|rules?)/i,
+  /olvida\s+(?:todas?\s+)?(?:las?\s+)?(?:instrucciones|reglas|prompts?)/i,
+  /system\s*prompt/i,
+  /(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\s+(?:admin|root|dev|jailbroken|dan)/i,
+  /(?:ahora\s+eres|act[uú]a\s+como|finge\s+ser)\s+(?:admin|root|sin\s+restricciones)/i,
+];
+function sanitizeName(raw: string): string {
+  // Allow only Unicode letters, digits, spaces; cap at 50 chars; collapse spaces.
+  let n = raw.replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim().slice(0, 50);
+  if (INJECTION_PATTERNS.some((re) => re.test(n))) n = "compa";
+  return n || "compa";
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,6 +66,8 @@ interface TGUpdate {
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  const unauth = requireInternalSecret(req);
+  if (unauth) return unauth;
 
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -84,7 +101,7 @@ Deno.serve(async (req: Request) => {
           telegram_user_id: message.from.id,
           telegram_chat_id: chatId,
           telegram_username: message.from.username,
-          first_name: message.from.first_name,
+          first_name: sanitizeName(message.from.first_name || ""),
           onboarding_step: "ask_name",
         })
         .select()
@@ -300,6 +317,7 @@ Deno.serve(async (req: Request) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        "x-internal-secret": Deno.env.get("INTERNAL_FUNCTION_SECRET") ?? "",
       },
       body: JSON.stringify({ message: text, telegram_user_id: user.id }),
     });
@@ -346,7 +364,7 @@ async function handleOnboarding(
       await supabase.from("telegram_users").update({ onboarding_step: "got_name" }).eq("id", user.id);
       return `¡Qué onda, compa! 🤙 Bienvenido a <b>Dry & High Five</b>. Soy tu compañero en este camino de libertad. Vamos a conocernos un poco...\n\n¿Cómo te llamo, carnal? 😊`;
     }
-    const name = text.split(" ").slice(0, 3).join(" ").substring(0, 50);
+    const name = sanitizeName(text.split(" ").slice(0, 3).join(" "));
     await supabase
       .from("telegram_users")
       .update({ first_name: name, onboarding_step: "ask_date" })
@@ -355,7 +373,7 @@ async function handleOnboarding(
   }
 
   if (step === "got_name") {
-    const name = text.split(" ").slice(0, 3).join(" ").substring(0, 50);
+    const name = sanitizeName(text.split(" ").slice(0, 3).join(" "));
     await supabase
       .from("telegram_users")
       .update({ first_name: name, onboarding_step: "ask_date" })
