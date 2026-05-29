@@ -543,7 +543,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      mexican_holidays_public: {
+        Row: {
+          description: string | null
+          holiday_date: string | null
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          description?: string | null
+          holiday_date?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          description?: string | null
+          holiday_date?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { ensureMemberProfile } from "@/lib/auth-profile";
 import { signInWithManagedGoogle } from "@/lib/lovable-oauth";
@@ -10,6 +11,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 import mascotImg from "@/assets/mascot.jpg";
+
+const credentialsSchema = z.object({
+  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres"),
+}).required();
+
+const emailOnlySchema = z.object({
+  email: z.string().trim().email("Email inválido").max(255),
+}).required();
+
+
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -68,16 +83,28 @@ const Auth = () => {
     e.preventDefault();
     setLoading(true);
 
+    const parsed = credentialsSchema.safeParse({ email, password });
+    if (!parsed.success) {
+      toast({
+        title: "Datos inválidos",
+        description: parsed.error.errors[0]?.message ?? "Revisa el formulario",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
+    const creds = { email: parsed.data.email!, password: parsed.data.password! };
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { error } = await supabase.auth.signInWithPassword(creds);
         if (error) throw error;
       } else {
         const { error } = await supabase.auth.signUp({
-          email,
-          password,
+          ...creds,
           options: { emailRedirectTo: window.location.origin },
         });
+
         if (error) throw error;
         toast({
           title: "¡Cuenta creada!",
@@ -94,6 +121,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
 
   const handleGoogleLogin = async () => {
     try {
@@ -118,18 +146,21 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    const parsed = emailOnlySchema.safeParse({ email });
+    if (!parsed.success) {
       toast({
-        title: "Escribe tu email",
-        description: "Necesitamos tu correo para enviarte el enlace de recuperación.",
+        title: "Email inválido",
+        description: parsed.error.errors[0]?.message ?? "Escribe un correo válido",
         variant: "destructive",
       });
       return;
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email!, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
+      if (error) throw error;
+
       if (error) throw error;
       toast({
         title: "Revisa tu correo 📩",
