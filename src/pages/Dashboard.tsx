@@ -193,6 +193,28 @@ const Dashboard = () => {
               <LogOut className="h-4 w-4" />
               Cerrar sesión
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  Cancelar suscripción
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Cancelar tu suscripción, compa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Vamos a enviar tu solicitud al equipo administrativo. Tu cuenta se cerrará y un admin te contactará para confirmar la baja. Puedes volver cuando quieras, aquí te esperamos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Mejor sigo</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCancelSubscription} disabled={cancelling}>
+                    {cancelling ? "Enviando..." : "Sí, cancelar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </section>
