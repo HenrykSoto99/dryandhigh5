@@ -15,6 +15,8 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  const unauth = requireInternalSecret(req);
+  if (unauth) return unauth;
 
   const startTime = Date.now();
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
