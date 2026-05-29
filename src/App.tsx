@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,12 +13,35 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Supabase password-recovery links land on the Site URL (root) with tokens
+// in the URL hash (e.g. #access_token=...&type=recovery). If we don't catch
+// it, Index renders and the user can't set a new password. This guard
+// redirects any recovery hash to /reset-password preserving the hash so
+// the ResetPassword page can complete the flow.
+const RecoveryRedirect = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const hash = window.location.hash || "";
+    const search = window.location.search || "";
+    const isRecovery =
+      hash.includes("type=recovery") || search.includes("type=recovery");
+    if (isRecovery && location.pathname !== "/reset-password") {
+      navigate({ pathname: "/reset-password", search, hash }, { replace: true });
+    }
+  }, [location.pathname, navigate]);
+
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <RecoveryRedirect />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
