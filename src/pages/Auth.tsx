@@ -18,10 +18,8 @@ const credentialsSchema = z.object({
     .string()
     .min(8, "Mínimo 8 caracteres")
     .max(72, "Máximo 72 caracteres"),
-});
-const emailOnlySchema = z.object({
-  email: z.string().trim().email("Email inválido").max(255),
-});
+}).required();
+
 
 
 const Auth = () => {
