@@ -90,15 +90,17 @@ const Auth = () => {
       return;
     }
 
+    const creds = { email: parsed.data.email!, password: parsed.data.password! };
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword(parsed.data);
+        const { error } = await supabase.auth.signInWithPassword(creds);
         if (error) throw error;
       } else {
         const { error } = await supabase.auth.signUp({
-          ...parsed.data,
+          ...creds,
           options: { emailRedirectTo: window.location.origin },
         });
+
         if (error) throw error;
         toast({
           title: "¡Cuenta creada!",
