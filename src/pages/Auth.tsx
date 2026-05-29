@@ -142,18 +142,21 @@ const Auth = () => {
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    const parsed = emailOnlySchema.safeParse({ email });
+    if (!parsed.success) {
       toast({
-        title: "Escribe tu email",
-        description: "Necesitamos tu correo para enviarte el enlace de recuperación.",
+        title: "Email inválido",
+        description: parsed.error.errors[0]?.message ?? "Escribe un correo válido",
         variant: "destructive",
       });
       return;
     }
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email!, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
+      if (error) throw error;
+
       if (error) throw error;
       toast({
         title: "Revisa tu correo 📩",
