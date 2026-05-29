@@ -363,7 +363,7 @@ async function handleOnboarding(
       await supabase.from("telegram_users").update({ onboarding_step: "got_name" }).eq("id", user.id);
       return `¡Qué onda, compa! 🤙 Bienvenido a <b>Dry & High Five</b>. Soy tu compañero en este camino de libertad. Vamos a conocernos un poco...\n\n¿Cómo te llamo, carnal? 😊`;
     }
-    const name = text.split(" ").slice(0, 3).join(" ").substring(0, 50);
+    const name = sanitizeName(text.split(" ").slice(0, 3).join(" "));
     await supabase
       .from("telegram_users")
       .update({ first_name: name, onboarding_step: "ask_date" })
