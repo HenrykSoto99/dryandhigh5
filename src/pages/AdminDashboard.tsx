@@ -23,6 +23,7 @@ import { ensureMemberProfile } from "@/lib/auth-profile";
 export default function AdminDashboard() {
   const { loading, isAdmin } = useAdminGuard();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [language, setLanguage] = useState<"en" | "es">("es");
   const [section, setSection] = useState<AdminSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
