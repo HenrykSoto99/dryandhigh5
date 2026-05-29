@@ -105,9 +105,45 @@ const Dashboard = () => {
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
-    };
-  }, [navigate, toast]);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth", { replace: true });
+  };
+
+  const [cancelling, setCancelling] = useState(false);
+  const handleCancelSubscription = async () => {
+    if (!userId) return;
+    setCancelling(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("security_alerts").insert({
+        alert_type: "subscription_cancellation_request",
+        severity: "warning",
+        summary: "Solicitud de cancelación de suscripción",
+        details: {
+          user_id: userId,
+          email: user?.email ?? null,
+          display_name: profile?.display_name ?? profile?.name ?? null,
+          requested_at: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      toast({
+        title: "Solicitud enviada",
+        description: "Hemos recibido tu cancelación. Un administrador te contactará pronto, compa.",
+      });
+      await supabase.auth.signOut();
+      navigate("/auth", { replace: true });
+    } catch (err: any) {
+      toast({
+        title: "No se pudo enviar la solicitud",
+        description: err?.message ?? "Intenta de nuevo en unos minutos.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
 
   const streakDays = useMemo(() => {
     if (!profile?.sobriety_start_date) return null;
