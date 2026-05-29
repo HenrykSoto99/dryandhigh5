@@ -265,6 +265,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          cancelled_at: string | null
           check_in_evening: string
           check_in_morning: string
           created_at: string
@@ -273,6 +274,7 @@ export type Database = {
           emergency_contact_consent_at: string | null
           gender: string | null
           id: string
+          is_active: boolean
           name: string | null
           onboarding_complete: boolean
           sobriety_start_date: string | null
@@ -282,6 +284,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          cancelled_at?: string | null
           check_in_evening?: string
           check_in_morning?: string
           created_at?: string
@@ -290,6 +293,7 @@ export type Database = {
           emergency_contact_consent_at?: string | null
           gender?: string | null
           id?: string
+          is_active?: boolean
           name?: string | null
           onboarding_complete?: boolean
           sobriety_start_date?: string | null
@@ -299,6 +303,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          cancelled_at?: string | null
           check_in_evening?: string
           check_in_morning?: string
           created_at?: string
@@ -307,6 +312,7 @@ export type Database = {
           emergency_contact_consent_at?: string | null
           gender?: string | null
           id?: string
+          is_active?: boolean
           name?: string | null
           onboarding_complete?: boolean
           sobriety_start_date?: string | null
