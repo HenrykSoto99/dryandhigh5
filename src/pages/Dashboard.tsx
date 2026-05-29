@@ -1,13 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, HeartHandshake, LineChart, LogOut, ShieldCheck, Sparkles } from "lucide-react";
+import { CalendarDays, HeartHandshake, LineChart, LogOut, ShieldCheck, Sparkles, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { ensureMemberProfile } from "@/lib/auth-profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import ProfileEditor from "@/components/dashboard/ProfileEditor";
+
 
 type MemberProfile = {
   display_name: string | null;
