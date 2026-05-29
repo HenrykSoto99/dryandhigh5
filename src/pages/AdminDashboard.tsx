@@ -147,7 +147,10 @@ export default function AdminDashboard() {
                     initialName={meProfile.name}
                     initialAvatarUrl={meProfile.avatar_url}
                     initialEmergencyConsent={meProfile.emergency_contact_consent ?? false}
-                    onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
+                    onUpdated={(data) => {
+                      setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }));
+                      queryClient.invalidateQueries({ queryKey: ["telegram_users"] });
+                    }}
                   />
                 ) : (
                   <Card className="border-gold/20">
