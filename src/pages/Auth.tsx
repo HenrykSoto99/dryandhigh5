@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { ensureMemberProfile } from "@/lib/auth-profile";
 import { signInWithManagedGoogle } from "@/lib/lovable-oauth";
@@ -10,6 +11,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff } from "lucide-react";
 import mascotImg from "@/assets/mascot.jpg";
+
+const credentialsSchema = z.object({
+  email: z.string().trim().email("Email inválido").max(255, "Email demasiado largo"),
+  password: z
+    .string()
+    .min(8, "Mínimo 8 caracteres")
+    .max(72, "Máximo 72 caracteres"),
+});
+const emailOnlySchema = z.object({
+  email: z.string().trim().email("Email inválido").max(255),
+});
+
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
