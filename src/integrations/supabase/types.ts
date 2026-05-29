@@ -573,6 +573,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      rotate_cron_internal_secret: {
+        Args: { p_secret: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user"
