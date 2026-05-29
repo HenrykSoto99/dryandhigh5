@@ -1,6 +1,21 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { sendTelegram, daysSince, parseDateMx } from "../_shared/telegram.ts";
+import { requireInternalSecret } from "../_shared/auth.ts";
+
+const INJECTION_PATTERNS = [
+  /ignore\s+(?:all\s+)?(?:previous|prior|above)\s+(?:instructions|prompts?|rules?)/i,
+  /olvida\s+(?:todas?\s+)?(?:las?\s+)?(?:instrucciones|reglas|prompts?)/i,
+  /system\s*prompt/i,
+  /(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\s+(?:admin|root|dev|jailbroken|dan)/i,
+  /(?:ahora\s+eres|act[uú]a\s+como|finge\s+ser)\s+(?:admin|root|sin\s+restricciones)/i,
+];
+function sanitizeName(raw: string): string {
+  // Allow only Unicode letters, digits, spaces; cap at 50 chars; collapse spaces.
+  let n = raw.replace(/[^\p{L}\p{N}\s]/gu, "").replace(/\s+/g, " ").trim().slice(0, 50);
+  if (INJECTION_PATTERNS.some((re) => re.test(n))) n = "compa";
+  return n || "compa";
+}
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
