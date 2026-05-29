@@ -185,6 +185,9 @@ const ProfileEditor = ({
               maxLength={80}
               className="font-body"
             />
+          </div>
+        </div>
+
         <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
@@ -221,10 +224,3 @@ const ProfileEditor = ({
 
 export default ProfileEditor;
 
-        </Button>
-      </CardContent>
-    </Card>
-  );
-};
-
-export default ProfileEditor;
