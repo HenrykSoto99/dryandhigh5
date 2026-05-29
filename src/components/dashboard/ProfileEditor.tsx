@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -13,8 +14,10 @@ interface ProfileEditorProps {
   initialDisplayName: string | null;
   initialName: string | null;
   initialAvatarUrl: string | null;
-  onUpdated: (data: { display_name: string | null; name: string | null; avatar_url: string | null }) => void;
+  initialEmergencyConsent?: boolean;
+  onUpdated: (data: { display_name: string | null; name: string | null; avatar_url: string | null; emergency_contact_consent?: boolean }) => void;
 }
+
 
 const ProfileEditor = ({
   userId,
