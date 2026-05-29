@@ -5,12 +5,32 @@ export function useTelegramUsers() {
   return useQuery({
     queryKey: ["telegram_users"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("telegram_users")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data;
+      const [tu, pr] = await Promise.all([
+        supabase.from("telegram_users").select("*").order("created_at", { ascending: false }),
+        supabase
+          .from("profiles")
+          .select("user_id, display_name, name, avatar_url, sobriety_start_date, telegram_chat_id, is_active, cancelled_at, updated_at"),
+      ]);
+      if (tu.error) throw tu.error;
+      if (pr.error) throw pr.error;
+      const profilesByChat = new Map<string, any>();
+      (pr.data ?? []).forEach((p: any) => {
+        if (p.telegram_chat_id != null) profilesByChat.set(String(p.telegram_chat_id), p);
+      });
+      // Merge profile-edited fields (name + sobriety) into the telegram user record
+      // so changes in the user's profile are reflected in the admin dashboard.
+      return (tu.data ?? []).map((u: any) => {
+        const p = profilesByChat.get(String(u.telegram_chat_id));
+        if (!p) return u;
+        return {
+          ...u,
+          first_name: p.name || p.display_name || u.first_name,
+          sobriety_start_date: p.sobriety_start_date ?? u.sobriety_start_date,
+          avatar_url: p.avatar_url ?? null,
+          profile_is_active: p.is_active,
+          profile_cancelled_at: p.cancelled_at,
+        };
+      });
     },
     refetchInterval: 30_000,
   });

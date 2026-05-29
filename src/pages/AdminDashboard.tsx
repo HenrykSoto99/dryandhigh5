@@ -13,6 +13,7 @@ import SuccessStoriesPanel from "@/components/admin/SuccessStoriesPanel";
 import SecuritySection from "@/components/admin/SecuritySection";
 import ProfileEditor from "@/components/dashboard/ProfileEditor";
 import { useCrisisFlags, useSecurityAlerts } from "@/hooks/useAdminData";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { ensureMemberProfile } from "@/lib/auth-profile";
 export default function AdminDashboard() {
   const { loading, isAdmin } = useAdminGuard();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [language, setLanguage] = useState<"en" | "es">("es");
   const [section, setSection] = useState<AdminSection>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -145,7 +147,10 @@ export default function AdminDashboard() {
                     initialName={meProfile.name}
                     initialAvatarUrl={meProfile.avatar_url}
                     initialEmergencyConsent={meProfile.emergency_contact_consent ?? false}
-                    onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
+                    onUpdated={(data) => {
+                      setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }));
+                      queryClient.invalidateQueries({ queryKey: ["telegram_users"] });
+                    }}
                   />
                 ) : (
                   <Card className="border-gold/20">
