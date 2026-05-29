@@ -153,10 +153,7 @@ const Dashboard = () => {
     return Math.max(0, Math.floor(diff / 86_400_000));
   }, [profile?.sobriety_start_date]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+
 
   if (loading) {
     return (
