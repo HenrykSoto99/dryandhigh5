@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Camera, Loader2, Save } from "lucide-react";
+import { Camera, Loader2, Save, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
@@ -13,7 +14,8 @@ interface ProfileEditorProps {
   initialDisplayName: string | null;
   initialName: string | null;
   initialAvatarUrl: string | null;
-  onUpdated: (data: { display_name: string | null; name: string | null; avatar_url: string | null }) => void;
+  initialEmergencyConsent?: boolean;
+  onUpdated: (data: { display_name: string | null; name: string | null; avatar_url: string | null; emergency_contact_consent?: boolean }) => void;
 }
 
 const ProfileEditor = ({
@@ -21,6 +23,7 @@ const ProfileEditor = ({
   initialDisplayName,
   initialName,
   initialAvatarUrl,
+  initialEmergencyConsent = false,
   onUpdated,
 }: ProfileEditorProps) => {
   const { toast } = useToast();
@@ -28,8 +31,10 @@ const ProfileEditor = ({
   const [displayName, setDisplayName] = useState(initialDisplayName ?? "");
   const [name, setName] = useState(initialName ?? "");
   const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? "");
+  const [emergencyConsent, setEmergencyConsent] = useState(initialEmergencyConsent);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -79,12 +84,17 @@ const ProfileEditor = ({
   const handleSave = async () => {
     setSaving(true);
     try {
+      const consentChanged = emergencyConsent !== initialEmergencyConsent;
       const { error } = await supabase
         .from("profiles")
         .update({
           display_name: displayName.trim() || null,
           name: name.trim() || null,
-        })
+          emergency_contact_consent: emergencyConsent,
+          ...(consentChanged
+            ? { emergency_contact_consent_at: emergencyConsent ? new Date().toISOString() : null }
+            : {}),
+        } as any)
         .eq("user_id", userId);
 
       if (error) throw error;
@@ -93,6 +103,7 @@ const ProfileEditor = ({
         display_name: displayName.trim() || null,
         name: name.trim() || null,
         avatar_url: avatarUrl || null,
+        emergency_contact_consent: emergencyConsent,
       });
       toast({ title: "Perfil actualizado", description: "Tus cambios se guardaron." });
     } catch (err: any) {
@@ -105,6 +116,7 @@ const ProfileEditor = ({
       setSaving(false);
     }
   };
+
 
   const initials = (displayName || name || "U")
     .split(" ")
@@ -176,6 +188,31 @@ const ProfileEditor = ({
           </div>
         </div>
 
+        <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+            <div className="flex-1 space-y-2">
+              <p className="font-display text-sm font-semibold text-foreground">
+                Consentimiento de contacto en emergencia
+              </p>
+              <p className="font-body text-xs text-muted-foreground">
+                En caso de detectar una crisis con riesgo vital (atentar contra tu vida), autorizas
+                que el equipo te canalice con las autoridades correspondientes (Línea de la Vida,
+                SAPTEL o servicios de emergencia). Puedes desactivarlo cuando quieras.
+              </p>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <Checkbox
+                  checked={emergencyConsent}
+                  onCheckedChange={(v) => setEmergencyConsent(v === true)}
+                />
+                <span className="font-body text-sm text-foreground">
+                  Doy mi consentimiento para ser contactado/canalizado en una emergencia
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+
         <Button onClick={handleSave} disabled={saving} className="w-full sm:w-auto">
           {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
           Guardar cambios
@@ -186,3 +223,4 @@ const ProfileEditor = ({
 };
 
 export default ProfileEditor;
+

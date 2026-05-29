@@ -217,6 +217,43 @@ Deno.serve(async (req: Request) => {
         severity: "critical",
         event_data: { keywords: matchedHigh, text },
       });
+
+      // Lookup dashboard consent (if user linked their telegram_chat_id to a profile)
+      let consent: boolean | null = null;
+      let dashboardUserId: string | null = null;
+      const { data: prof } = await supabase
+        .from("profiles")
+        .select("user_id, emergency_contact_consent")
+        .eq("telegram_chat_id", chatId)
+        .maybeSingle();
+      if (prof) {
+        consent = (prof as any).emergency_contact_consent ?? false;
+        dashboardUserId = (prof as any).user_id ?? null;
+      }
+
+      // Notify admin via security_alerts (security-monitor will push to Telegram)
+      await supabase.from("security_alerts").insert({
+        alert_type: "severe_crisis_detected",
+        severity: "critical",
+        summary: `Crisis severa: ${user.first_name || "miembro"} (${dias ?? "?"} días)`,
+        details: {
+          telegram_user_id: user.telegram_user_id,
+          telegram_chat_id: chatId,
+          first_name: user.first_name,
+          keywords: matchedHigh,
+          message_preview: text.slice(0, 300),
+          sobriety_days: dias,
+          dashboard_user_id: dashboardUserId,
+          emergency_contact_consent: consent,
+          consent_note: consent === true
+            ? "El miembro AUTORIZÓ el contacto con autoridades en caso de riesgo vital."
+            : consent === false
+            ? "El miembro NO ha autorizado el contacto con autoridades. Solicitar consentimiento antes de canalizar."
+            : "Miembro no vinculado al dashboard — no hay registro de consentimiento.",
+        },
+        source_telegram_user_id: user.id,
+      });
+
       return new Response(JSON.stringify({ ok: true }));
     }
 

@@ -17,7 +17,9 @@ type MemberProfile = {
   check_in_morning: string;
   check_in_evening: string;
   onboarding_complete: boolean;
+  emergency_contact_consent?: boolean;
 };
+
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -52,7 +54,8 @@ const Dashboard = () => {
           .maybeSingle(),
         supabase
           .from("profiles")
-          .select("display_name, name, avatar_url, sobriety_start_date, check_in_morning, check_in_evening, onboarding_complete")
+          .select("display_name, name, avatar_url, sobriety_start_date, check_in_morning, check_in_evening, onboarding_complete, emergency_contact_consent")
+
           .eq("user_id", session.user.id)
           .maybeSingle(),
       ]);
@@ -182,12 +185,14 @@ const Dashboard = () => {
             initialDisplayName={profile?.display_name ?? null}
             initialName={profile?.name ?? null}
             initialAvatarUrl={profile?.avatar_url ?? null}
+            initialEmergencyConsent={profile?.emergency_contact_consent ?? false}
             onUpdated={(data) =>
               setProfile((prev) => (prev ? { ...prev, ...data } : prev))
             }
           />
         </section>
       ) : null}
+
 
       <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-10 pt-6 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
