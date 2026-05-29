@@ -177,6 +177,7 @@ const Dashboard = () => {
     } finally {
       setCancelling(false);
     }
+  };
 
 
 
