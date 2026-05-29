@@ -1,13 +1,25 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarDays, HeartHandshake, LineChart, LogOut, ShieldCheck, Sparkles } from "lucide-react";
+import { CalendarDays, HeartHandshake, LineChart, LogOut, ShieldCheck, Sparkles, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { ensureMemberProfile } from "@/lib/auth-profile";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import ProfileEditor from "@/components/dashboard/ProfileEditor";
+
 
 type MemberProfile = {
   display_name: string | null;
@@ -97,6 +109,48 @@ const Dashboard = () => {
     };
   }, [navigate, toast]);
 
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth", { replace: true });
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!userId) return;
+    setCancelling(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { error } = await supabase.from("security_alerts").insert({
+        alert_type: "subscription_cancellation_request",
+        severity: "warning",
+        summary: "Solicitud de cancelación de suscripción",
+        details: {
+          user_id: userId,
+          email: user?.email ?? null,
+          display_name: profile?.display_name ?? profile?.name ?? null,
+          requested_at: new Date().toISOString(),
+        },
+      });
+      if (error) throw error;
+      toast({
+        title: "Solicitud enviada",
+        description: "Hemos recibido tu cancelación. Un administrador te contactará pronto, compa.",
+      });
+      await supabase.auth.signOut();
+      navigate("/auth", { replace: true });
+    } catch (err: any) {
+      toast({
+        title: "No se pudo enviar la solicitud",
+        description: err?.message ?? "Intenta de nuevo en unos minutos.",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+
   const streakDays = useMemo(() => {
     if (!profile?.sobriety_start_date) return null;
     const start = new Date(`${profile.sobriety_start_date}T00:00:00`);
@@ -105,10 +159,7 @@ const Dashboard = () => {
     return Math.max(0, Math.floor(diff / 86_400_000));
   }, [profile?.sobriety_start_date]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth", { replace: true });
-  };
+
 
   if (loading) {
     return (
@@ -142,6 +193,28 @@ const Dashboard = () => {
               <LogOut className="h-4 w-4" />
               Cerrar sesión
             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  Cancelar suscripción
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>¿Cancelar tu suscripción, compa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Vamos a enviar tu solicitud al equipo administrativo. Tu cuenta se cerrará y un admin te contactará para confirmar la baja. Puedes volver cuando quieras, aquí te esperamos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Mejor sigo</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleCancelSubscription} disabled={cancelling}>
+                    {cancelling ? "Enviando..." : "Sí, cancelar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </section>
