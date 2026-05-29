@@ -17,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/safe-client";
+import { ensureMemberProfile } from "@/lib/auth-profile";
 
 export default function AdminDashboard() {
   const { loading, isAdmin } = useAdminGuard();
@@ -27,7 +28,7 @@ export default function AdminDashboard() {
   const { data: unresolvedCrisis = [] } = useCrisisFlags(true);
   const { data: unresolvedSecurity = [] } = useSecurityAlerts(true);
   const [meId, setMeId] = useState<string | null>(null);
-  const [meProfile, setMeProfile] = useState<{ display_name: string | null; name: string | null; avatar_url: string | null } | null>(null);
+  const [meProfile, setMeProfile] = useState<{ display_name: string | null; name: string | null; avatar_url: string | null; emergency_contact_consent?: boolean } | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -35,12 +36,14 @@ export default function AdminDashboard() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session || !mounted) return;
       setMeId(session.user.id);
+      // Ensure profile row exists for admin (handle_new_user covers new signups; this covers older accounts)
+      await ensureMemberProfile(session.user);
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, name, avatar_url")
+        .select("display_name, name, avatar_url, emergency_contact_consent")
         .eq("user_id", session.user.id)
         .maybeSingle();
-      if (mounted) setMeProfile(data ?? { display_name: null, name: null, avatar_url: null });
+      if (mounted) setMeProfile(data ?? { display_name: null, name: null, avatar_url: null, emergency_contact_consent: false });
     })();
     return () => { mounted = false; };
   }, []);
@@ -109,6 +112,8 @@ export default function AdminDashboard() {
             language={language}
             onToggleLanguage={() => setLanguage((l) => (l === "en" ? "es" : "en"))}
             title={title}
+            profile={meProfile}
+            onOpenProfile={() => setSection("settings")}
           />
 
           <main className="flex-1 p-4 lg:p-6 space-y-6 overflow-x-hidden">
@@ -139,6 +144,7 @@ export default function AdminDashboard() {
                     initialDisplayName={meProfile.display_name}
                     initialName={meProfile.name}
                     initialAvatarUrl={meProfile.avatar_url}
+                    initialEmergencyConsent={meProfile.emergency_contact_consent ?? false}
                     onUpdated={(data) => setMeProfile((prev) => ({ ...(prev ?? { display_name: null, name: null, avatar_url: null }), ...data }))}
                   />
                 ) : (

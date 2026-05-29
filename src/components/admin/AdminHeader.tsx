@@ -1,5 +1,6 @@
 import { Menu, Globe, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/safe-client";
 import { useNavigate } from "react-router-dom";
 
@@ -8,14 +9,23 @@ interface Props {
   language: "en" | "es";
   onToggleLanguage: () => void;
   title?: string;
+  onOpenProfile?: () => void;
+  profile?: { display_name: string | null; name: string | null; avatar_url: string | null } | null;
 }
 
-export default function AdminHeader({ onToggleSidebar, language, onToggleLanguage, title }: Props) {
+export default function AdminHeader({ onToggleSidebar, language, onToggleLanguage, title, onOpenProfile, profile }: Props) {
   const navigate = useNavigate();
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  const displayName = profile?.display_name || profile?.name || "Admin";
+  const initials = displayName
+    .split(" ")
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase())
+    .join("") || "A";
 
   return (
     <header className="sticky top-0 z-20 flex items-center justify-between px-4 lg:px-6 py-3 border-b border-gold/20 bg-charcoal/95 backdrop-blur">
@@ -34,6 +44,22 @@ export default function AdminHeader({ onToggleSidebar, language, onToggleLanguag
       </div>
 
       <div className="flex items-center gap-2">
+        {onOpenProfile && (
+          <button
+            type="button"
+            onClick={onOpenProfile}
+            className="flex items-center gap-2 rounded-full border border-gold/30 pl-1 pr-3 py-1 hover:bg-gold/10 transition-colors"
+            aria-label={language === "es" ? "Abrir mi perfil" : "Open my profile"}
+          >
+            <Avatar className="h-7 w-7 border border-gold/40">
+              <AvatarImage src={profile?.avatar_url || undefined} alt={displayName} />
+              <AvatarFallback className="bg-gold/15 text-gold text-[11px] font-display">{initials}</AvatarFallback>
+            </Avatar>
+            <span className="hidden sm:inline font-body text-xs text-gold max-w-[120px] truncate">
+              {displayName}
+            </span>
+          </button>
+        )}
         <Button
           variant="outline"
           size="sm"
