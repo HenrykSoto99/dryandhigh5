@@ -17,7 +17,9 @@ type MemberProfile = {
   check_in_morning: string;
   check_in_evening: string;
   onboarding_complete: boolean;
+  emergency_contact_consent?: boolean;
 };
+
 
 const Dashboard = () => {
   const [loading, setLoading] = useState(true);
