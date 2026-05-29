@@ -372,7 +372,7 @@ async function handleOnboarding(
   }
 
   if (step === "got_name") {
-    const name = text.split(" ").slice(0, 3).join(" ").substring(0, 50);
+    const name = sanitizeName(text.split(" ").slice(0, 3).join(" "));
     await supabase
       .from("telegram_users")
       .update({ first_name: name, onboarding_step: "ask_date" })
