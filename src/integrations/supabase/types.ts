@@ -269,6 +269,8 @@ export type Database = {
           check_in_morning: string
           created_at: string
           display_name: string | null
+          emergency_contact_consent: boolean
+          emergency_contact_consent_at: string | null
           gender: string | null
           id: string
           name: string | null
@@ -284,6 +286,8 @@ export type Database = {
           check_in_morning?: string
           created_at?: string
           display_name?: string | null
+          emergency_contact_consent?: boolean
+          emergency_contact_consent_at?: string | null
           gender?: string | null
           id?: string
           name?: string | null
@@ -299,6 +303,8 @@ export type Database = {
           check_in_morning?: string
           created_at?: string
           display_name?: string | null
+          emergency_contact_consent?: boolean
+          emergency_contact_consent_at?: string | null
           gender?: string | null
           id?: string
           name?: string | null
