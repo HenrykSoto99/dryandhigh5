@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Download, Search } from "lucide-react";
 import { useTelegramUsers } from "@/hooks/useAdminData";
 import UserDetailDialog from "./UserDetailDialog";
@@ -187,7 +188,17 @@ export default function UsersSection({ language }: Props) {
                     onClick={() => setSelectedId(u.id)}
                     className="cursor-pointer hover:bg-gold/5 transition-colors"
                   >
-                    <TableCell className="font-medium text-sm">{u.first_name || "—"}</TableCell>
+                    <TableCell className="font-medium text-sm">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-7 w-7 border border-gold/30">
+                          <AvatarImage src={u.avatar_url || undefined} alt={u.first_name || "Usuario"} />
+                          <AvatarFallback className="bg-gold/10 text-gold text-[10px] font-display">
+                            {(u.first_name?.[0] || "U").toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{u.first_name || "—"}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {u.telegram_username ? `@${u.telegram_username}` : `#${u.telegram_user_id}`}
                     </TableCell>
