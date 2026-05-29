@@ -105,12 +105,17 @@ const Dashboard = () => {
 
     return () => {
       mounted = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [navigate, toast]);
+
+  const [cancelling, setCancelling] = useState(false);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth", { replace: true });
   };
 
-  const [cancelling, setCancelling] = useState(false);
   const handleCancelSubscription = async () => {
     if (!userId) return;
     setCancelling(true);
@@ -144,6 +149,7 @@ const Dashboard = () => {
       setCancelling(false);
     }
   };
+
 
   const streakDays = useMemo(() => {
     if (!profile?.sobriety_start_date) return null;
