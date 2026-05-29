@@ -178,6 +178,8 @@ const Dashboard = () => {
         </Card>
       </section>
 
+      {userId ? (
+        <section className="mx-auto max-w-6xl px-6 pb-2">
           <ProfileEditor
             userId={userId}
             initialDisplayName={profile?.display_name ?? null}
@@ -188,11 +190,9 @@ const Dashboard = () => {
               setProfile((prev) => (prev ? { ...prev, ...data } : prev))
             }
           />
-
-            }
-          />
         </section>
       ) : null}
+
 
       <section className="mx-auto grid max-w-6xl gap-6 px-6 pb-10 pt-6 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
