@@ -37,14 +37,38 @@ function sanitizeUserInput(text: string): string {
     .slice(0, 2000);
 }
 
+function getMexicoDateTime(): { fecha: string; hora: string } {
+  const now = new Date();
+  const fecha = new Intl.DateTimeFormat("es-MX", {
+    timeZone: "America/Mexico_City",
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "2-digit",
+  }).format(now);
+  const hora = new Intl.DateTimeFormat("es-MX", {
+    timeZone: "America/Mexico_City",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(now);
+  return { fecha, hora };
+}
+
 function buildSystemPrompt(ctx: {
   nombre: string;
   dias_sobriedad: number | null;
   ultimo_estado: string | null;
   proximo_festivo: { name: string; days: number } | null;
 }) {
+  const mx = getMexicoDateTime();
   const parts: string[] = [
     `Eres Dry & High Five, un compañero virtual de sobriedad mexicano. Tu personalidad es empática, jovial, cálida y auténtica. Hablas en español mexicano coloquial pero respetuoso.
+
+FECHA Y HORA ACTUAL (Ciudad de México, zona horaria America/Mexico_City):
+- Hoy es ${mx.fecha}.
+- Hora local: ${mx.hora} hrs.
+- Usa SIEMPRE esta fecha y hora como referencia real. NUNCA inventes ni asumas otra fecha/hora. Si el usuario pregunta qué día u hora es, responde con estos valores exactos.
 
 REGLAS DE IDENTIDAD:
 - Eres un compa, no un doctor ni terapeuta.
