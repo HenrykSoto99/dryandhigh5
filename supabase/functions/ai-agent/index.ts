@@ -232,13 +232,42 @@ Deno.serve(async (req: Request) => {
       }),
     });
 
-    if (aiResp.status === 429) {
-      return new Response(JSON.stringify({ response: "Aguanta tantito, compa, tengo mucho trabajo ahorita. Intenta en un minuto. 🙏" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (aiResp.status === 402) {
-      return new Response(JSON.stringify({ response: "Necesito un respiro técnico. Intenta más tarde, compa. 🙏" }), {
+    if (aiResp.status === 429 || aiResp.status === 402) {
+      const alertType = aiResp.status === 402 ? "ai_credits_exhausted" : "ai_rate_limited";
+      // Dedupe: only insert one alert per hour per type to avoid spamming admin
+      const hourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const { count: recent } = await supabase
+        .from("security_alerts")
+        .select("id", { count: "exact", head: true })
+        .eq("alert_type", alertType)
+        .gte("created_at", hourAgo);
+
+      if ((recent ?? 0) === 0) {
+        await supabase.from("security_alerts").insert({
+          alert_type: alertType,
+          severity: "critical",
+          summary: aiResp.status === 402
+            ? "🚨 Créditos de AI Gateway AGOTADOS — el bot no puede responder"
+            : "⚠️ AI Gateway rate-limit (429) — el bot está siendo throttled",
+          details: {
+            http_status: aiResp.status,
+            action_required: aiResp.status === 402
+              ? "Comprar créditos en Settings → Plans & credits del workspace de Lovable. Mientras tanto los usuarios reciben un mensaje de fallback."
+              : "Si persiste, revisar volumen de mensajes o subir plan.",
+            user_facing_message: aiResp.status === 402
+              ? "Necesito un respiro técnico. Intenta más tarde, compa. 🙏"
+              : "Aguanta tantito, compa, tengo mucho trabajo ahorita. Intenta en un minuto. 🙏",
+            telegram_user_id,
+            timestamp: new Date().toISOString(),
+          },
+          source_telegram_user_id: telegram_user_id,
+        });
+      }
+
+      const fallback = aiResp.status === 402
+        ? "Estoy con un detallito técnico ahorita, compa 🙏. Mientras tanto, si necesitas apoyo inmediato escribe /sos. También: 📞 Línea de la Vida 800 911 2000 (24/7) · SAPTEL 55 5259 8121. Vuelvo en un rato."
+        : "Aguanta tantito, compa, tengo mucho trabajo ahorita. Intenta en un minuto. 🙏";
+      return new Response(JSON.stringify({ response: fallback }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
